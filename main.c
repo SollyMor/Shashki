@@ -1,3 +1,10 @@
+/**
+ * @file checkers.c
+ * @brief Программа для игры в шашки между человеком и компьютером
+ * 
+ * Программа реализует классическую игру в шашки с консольным интерфейсом.
+ * Поддерживаются стандартные правила игры, включая превращение в дамки и обязательное взятие.
+ */
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -5,61 +12,76 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define SIZE 35
-#define BOARD_SIZE 18
-#define MAX_MOVES 12
+#define SIZE 35                       /**< Ширина игрового поля в символах */
+#define BOARD_SIZE 18                 /**< Высота игрового поля в символах */
+#define MAX_MOVES 12                  /**< Максимальное количество возможных ходов для анализа */
+
+
+/**
+ * @struct GameState
+ * @brief Состояние игры для отслеживания количества фишек
+ */
 
 // Структура нужна для отслеживания конца игры
 typedef struct
 {
-  int count_white;      // Количество белых фишек
-  int count_black;      // Количество черных фишек
-  int count_white_king; // Количество дамок белых
-  int count_black_king; // Количество дамок черных
+  int count_white;         /**< Количество белых фишек */
+  int count_black;         /**< Количество черных фишек */
+  int count_white_king;    /**< Количество белых дамок */
+  int count_black_king;    /**< Количество черных дамок */
 } GameState;
 
-// Координаты фишки на поле для вывода, и поля для логики
+/**
+ * @struct Position
+ * @brief Координаты фишки на поле
+ */
 typedef struct
 {
-  short x;    // Ряд (A,B,C)
-  short y;    // Строка (1,2,3)
-  short x_8;  // Ряд
-  short y_8;  // Строка
-  bool damka; // Может ли клетка куда-то походить?
+  short x;                  /**< Ряд (A,B,C) на графическом поле */
+  short y;                  /**< Строка (1,2,3) на графическом поле */
+  short x_8;                /**< Координата x на логическом поле (0-7) */
+  short y_8;                /**< Координата y на логическом поле (0-7) */
+  bool damka;               /**< Флаг, является ли фишка дамкой */
 } Position;
 
-// Валидность перемещения
+
+/**
+ * @struct Valid_Hod
+ * @brief Валидные ходы для фишки
+ */
 typedef struct
 {
-  bool l_h; // Ход слева-вверх
-  short lh_y;
-  short lh_x;
-  bool r_h; // Ход справа-вверх
-  short rh_y;
-  short rh_x;
-  bool l_s; // Ход слева-вниз
-  short ls_y;
-  short ls_x;
-  bool r_s; // Ход справа-вверх
-  short rs_y;
-  short rs_x;
+  bool l_h;     /**< Ход слева-вверх */
+  short lh_y;   /**< Координата y для хода слева-вверх */
+  short lh_x;   /**< Координата x для хода слева-вверх */
+  bool r_h;     /**< Ход справа-вверх */
+  short rh_y;   /**< Координата y для хода справа-вверх */
+  short rh_x;   /**< Координата x для хода справа-вверх */
+  bool l_s;     /**< Ход слева-вниз */
+  short ls_y;   /**< Координата y для хода слева-вниз */
+  short ls_x;   /**< Координата x для хода слева-вниз */
+  bool r_s;     /**< Ход справа-вниз */
+  short rs_y;   /**< Координата y для хода справа-вниз */
+  short rs_x;   /**< Координата x для хода справа-вниз */
 } Valid_Hod;
 
-// кого можно срубить
-typedef struct
-{
-  bool kill_l_h; // Ход слева-вверх
-  short kill_lh_y;
-  short kill_lh_x;
-  bool kill_r_h; // Ход справа-вверх
-  short kill_rh_y;
-  short kill_rh_x;
-  bool kill_l_s; // Ход слева-вниз
-  short kill_ls_y;
-  short kill_ls_x;
-  bool kill_r_s; // Ход справа-вверх
-  short kill_rs_y;
-  short kill_rs_x;
+/**
+ * @struct Valid_Kill
+ * @brief Валидные взятия для фишки
+ */
+typedef struct {
+    bool kill_l_h;   /**< Взятие слева-вверх */
+    short kill_lh_y; /**< Координата y для взятия слева-вверх */
+    short kill_lh_x; /**< Координата x для взятия слева-вверх */
+    bool kill_r_h;   /**< Взятие справа-вверх */
+    short kill_rh_y; /**< Координата y для взятия справа-вверх */
+    short kill_rh_x; /**< Координата x для взятия справа-вверх */
+    bool kill_l_s;   /**< Взятие слева-вниз */
+    short kill_ls_y; /**< Координата y для взятия слева-вниз */
+    short kill_ls_x; /**< Координата x для взятия слева-вниз */
+    bool kill_r_s;   /**< Взятие справа-вниз */
+    short kill_rs_y; /**< Координата y для взятия справа-вниз */
+    short kill_rs_x; /**< Координата x для взятия справа-вниз */
 } Valid_Kill;
 
 bool is_player_turn = false;           // Флаг, ход игрока
@@ -69,29 +91,187 @@ char computer_piece;                   // Фишка компьютера
 GameState game_state = {12, 12, 0, 0}; // Состояние поля
 
 // Функции
+/**
+ * @brief Преобразует логические координаты в графические символы
+ * @param i_x Логическая координата x (0-7)
+ * @param i_y Логическая координата y (0-7)
+ * @param[out] x Символьное обозначение столбца (A-H)
+ * @param[out] y Символьное обозначение строки (1-8)
+ * @return true если преобразование успешно, false в противном случае
+ */
 bool reverse_graph_out_koordinaty(short i_x, short i_y, char *x, char *y);
+
+/**
+ * @brief Очищает фишку на графическом поле
+ * @param board Игровое поле
+ * @param x Координата x на графическом поле
+ * @param y Координата y на графическом поле
+ */
 void wash_piece(char board[BOARD_SIZE][SIZE + 1], short x, short y);
+
+/**
+ * @brief Преобразует логические координаты в графические
+ * @param i_x Логическая координата x (0-7)
+ * @param i_y Логическая координата y (0-7)
+ * @param[out] x Графическая координата x
+ * @param[out] y Графическая координата y
+ */
 void reverse_graph_koordinaty(short i_x, short i_y, short *x, short *y);
+
+/**
+ * @brief Получает возможные взятия для фишки
+ * @param where Позиция фишки
+ * @param[out] velian Структура с возможными взятиями
+ * @param lodic Логическое представление доски
+ * @return Количество возможных взятий
+ */
 int get_valid_kill(Position where, Valid_Kill *velian, char lodic[8][8]);
+
+/**
+ * @brief Получает возможные ходы для фишки
+ * @param pos Позиция фишки
+ * @param[out] moves Структура с возможными ходами
+ * @param lodic Логическое представление доски
+ * @return Количество возможных ходов
+ */
 int get_valid_moves(Position pos, Valid_Hod *moves, char lodic[8][8]);
+
+/**
+ * @brief Инициализирует начальное расположение фишек
+ * @param board Игровое поле
+ * @param white_on_bottom Флаг, белые фишки внизу
+ */
 void setup_pieces(char board[BOARD_SIZE][SIZE + 1], bool white_on_bottom);
+
+/**
+ * @brief Инициализирует пустое игровое поле
+ * @param board Игровое поле
+ */
 void initialize_board(char board[BOARD_SIZE][SIZE + 1]);
+
+/**
+ * @brief Выводит игровое поле в консоль
+ * @param board Игровое поле
+ */
 void print_board(const char board[BOARD_SIZE][SIZE + 1]);
+
+/**
+ * @brief Основной игровой цикл
+ * @param board Игровое поле
+ */
 void play_game(char board[BOARD_SIZE][SIZE + 1]);
+
+/**
+ * @brief Подсвечивает выбранную фишку
+ * @param x Координата x на графическом поле
+ * @param y Координата y на графическом поле
+ * @param board Игровое поле
+ */
 void highlight_piece(short x, short y, char board[BOARD_SIZE][SIZE + 1]);
+
+/**
+ * @brief Выводит информацию о текущем ходе
+ */
 void print_turn();
+
+/**
+ * @brief Проверяет условие окончания игры
+ * @return true если игра окончена, false в противном случае
+ */
 bool check_game_over();
+
+/**
+ * @brief Меняет текущего игрока
+ */
 void switch_turn();
+
+/**
+ * @brief Обрабатывает ход игрока
+ * @param board Игровое поле
+ * @return true если ход выполнен успешно, false в противном случае
+ */
 bool player_move(char board[BOARD_SIZE][SIZE + 1]);
+
+/**
+ * @brief Преобразует символьные координаты в числовые
+ * @param x Символьное обозначение столбца (A-H)
+ * @param y Символьное обозначение строки (1-8)
+ * @param[out] i_x Графическая координата x
+ * @param[out] i_y Графическая координата y
+ * @param[out] i_x_8 Логическая координата x (0-7)
+ * @param[out] i_y_8 Логическая координата y (0-7)
+ * @return true если преобразование успешно, false в противном случае
+ */
 bool koordinaty(char x, char y, short *i_x, short *i_y, short *i_x_8, short *i_y_8);
+
+/**
+ * @brief Перемещает фишку на новую позицию
+ * @param where Текущая позиция фишки
+ * @param x Новая координата x
+ * @param y Новая координата y
+ */
 void Hod(Position *where, int x, int y);
+
+/**
+ * @brief Подсвечивает возможные ходы
+ * @param board Игровое поле
+ * @param x Координата x на графическом поле
+ * @param y Координата y на графическом поле
+ * @param not_chose Флаг выбора
+ */
 void light(char board[BOARD_SIZE][SIZE + 1], short x, short y, bool not_chose);
+
+/**
+ * @brief Превращает фишку в дамку при достижении последней линии
+ * @param where Позиция фишки
+ * @param lodic Логическое представление доски
+ */
 void becameQueen(Position where, char lodic[8][8]);
+
+/**
+ * @brief Обрабатывает ход компьютера
+ * @param board Игровое поле
+ * @return true если ход выполнен успешно, false в противном случае
+ */
 bool computer_move(char board[BOARD_SIZE][SIZE + 1]);
+
+/**
+ * @brief Оценивает текущее состояние доски для компьютера
+ * @param lodic Логическое представление доски
+ * @param is_white Флаг, играет ли компьютер белыми
+ * @return Оценка состояния доски
+ */
 int evaluate_board_pc(char lodic[8][8], bool is_white);
+
+/**
+ * @brief Находит лучшую последовательность взятий
+ * @param pos Текущая позиция
+ * @param vks Возможные взятия
+ * @param vks_count Количество возможных взятий
+ * @param mx_score Текущая максимальная оценка
+ * @param lodic Логическое представление доски
+ * @param[out] best_lodic Лучшее состояние доски
+ * @param[out] best_game_state Лучшее состояние игры
+ * @return Максимальная оценка
+ */
 int get_best_sequent_kills(Position pos, Valid_Kill vks, int vks_count, int mx_score, char lodic[8][8], char best_lodic[8][8], GameState *best_game_state);
+
+/**
+ * @brief Вычисляет возможные ходы со взятием
+ * @param pos Текущая позиция
+ * @param lodic Логическое представление доски
+ * @param[out] move_i Количество возможных ходов
+ * @param[out] move_buffer Буфер для хранения возможных ходов
+ * @param[out] lodic_buffer Буфер для состояний доски
+ * @param[out] game_states Буфер для состояний игры
+ */
 void calculate_kill_moves(Position pos, char lodic[8][8], int *move_i, short move_buffer[10][2], char lodic_buffer[10][8][8], GameState *game_states);
 
+/**
+ * @brief Главная функция программы
+ * @return Код завершения программы
+ */
+int main();
 char lodic[8][8];
 
 char board[BOARD_SIZE][SIZE + 1] = { // Интерфейс поля
