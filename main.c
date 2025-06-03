@@ -454,8 +454,7 @@ void setup_pieces(char board[BOARD_SIZE][SIZE + 1], bool white_on_bottom)
   }
 }
 
-void play_game(char board[BOARD_SIZE][SIZE + 1])
-{
+void play_game(char board[BOARD_SIZE][SIZE + 1]){
   bool has_moves = true;
   while (true)
   {
@@ -487,8 +486,7 @@ void play_game(char board[BOARD_SIZE][SIZE + 1])
   printf("Конец. Парам-парам-пам");
 }
 
-bool player_move(char board[BOARD_SIZE][SIZE + 1])
-{
+bool player_move(char board[BOARD_SIZE][SIZE + 1]){
   printf("\nВаш ход. Введите координаты фишки (например, B3): ");
 
   char x, y;
@@ -718,8 +716,7 @@ bool player_move(char board[BOARD_SIZE][SIZE + 1])
   return true;
 }
 
-void Hod(Position *where, int x, int y)
-{
+void Hod(Position *where, int x, int y){
   char bslo = lodic[where->y_8][where->x_8];
   lodic[where->y_8][where->x_8] = '0';
   where->x_8 = x;
@@ -727,17 +724,14 @@ void Hod(Position *where, int x, int y)
   lodic[where->y_8][where->x_8] = bslo;
 }
 
-bool reverse_graph_out_koordinaty(short i_x, short i_y, char *x, char *y)
-{
+bool reverse_graph_out_koordinaty(short i_x, short i_y, char *x, char *y){
   // Вычисляем координаты lodic из графических координат
   *x = 'A' + i_x;
   *y = '8' - i_y;
-
   return true;
 }
 
-void reverse_graph_koordinaty(short i_x, short i_y, short *x, short *y)
-{
+void reverse_graph_koordinaty(short i_x, short i_y, short *x, short *y){
   *x = (i_x * 4) + 2;
   *y = 1 + (i_y * 2);
 }
@@ -752,8 +746,7 @@ char lodic[8][8] = { // для просчета ходов.
     {' ', '2', ' ', '2', ' ', '2', ' ', '2'},
     {'2', ' ', '2', ' ', '2', ' ', '2', ' '}};
 
-int get_valid_moves(Position where, Valid_Hod *motion, char lodic[8][8])
-{
+int get_valid_moves(Position where, Valid_Hod *motion, char lodic[8][8]){
   // Инициализация всех возможных ходов как недопустимых
   motion->l_h = false;
   motion->r_h = false;
@@ -834,8 +827,7 @@ int get_valid_moves(Position where, Valid_Hod *motion, char lodic[8][8])
   return count;
 }
 
-int get_valid_kill(Position where, Valid_Kill *velian, char lodic[8][8])
-{ // Клетки которые можно срубить
+int get_valid_kill(Position where, Valid_Kill *velian, char lodic[8][8]){ // Клетки которые можно срубить
   // Инициализация всех возможных ходов как недопустимых
   velian->kill_l_h = false;
   velian->kill_r_h = false;
@@ -942,8 +934,7 @@ int get_valid_kill(Position where, Valid_Kill *velian, char lodic[8][8])
   return count;
 }
 
-bool koordinaty(char x, char y, short *i_x, short *i_y, short *i_x_8, short *i_y_8)
-{ // Расположение фишки на поле
+bool koordinaty(char x, char y, short *i_x, short *i_y, short *i_x_8, short *i_y_8){ // Расположение фишки на поле
   if (x < 'A' || x > 'H' || y < '1' || y > '8')
     return false;
 
@@ -958,18 +949,15 @@ bool koordinaty(char x, char y, short *i_x, short *i_y, short *i_x_8, short *i_y
   return true;
 }
 
-void print_turn()
-{ // Печать флага чей сейчас ход
+void print_turn(){ // Печать флага чей сейчас ход
   printf("\nСейчас ход: %s\n", is_player_turn ? "игрока" : "компьютера");
 }
 
-void switch_turn()
-{ // Поменять ход
+void switch_turn(){ // Поменять ход
   is_player_turn = !is_player_turn;
 }
 
-void highlight_piece(short x, short y, char board[BOARD_SIZE][SIZE + 1])
-{ // Выделить клетку
+void highlight_piece(short x, short y, char board[BOARD_SIZE][SIZE + 1]){ // Выделить клетку
   if (x > 1)
     board[y][x - 1] = '#';
   if (x < SIZE - 2)
@@ -982,8 +970,7 @@ void highlight_piece(short x, short y, char board[BOARD_SIZE][SIZE + 1])
     board[y][x + 1] = ' ';
 }
 
-bool check_game_over()
-{ // Проверка оканчания игры
+bool check_game_over(){ // Проверка оканчания игры
   if (game_state.count_white + game_state.count_white_king == 0)
   {
     printf("\nЧерные победили! У белых не осталось фишек.\n");
@@ -1000,13 +987,11 @@ bool check_game_over()
   return false;
 }
 
-void wash_piece(char board[BOARD_SIZE][SIZE + 1], short x, short y)
-{
+void wash_piece(char board[BOARD_SIZE][SIZE + 1], short x, short y){
   board[y][x] = '*';
 }
 
-void light(char board[BOARD_SIZE][SIZE + 1], short x, short y, bool not_chose)
-{
+void light(char board[BOARD_SIZE][SIZE + 1], short x, short y, bool not_chose){
 
   if (not_chose)
   {
@@ -1020,8 +1005,7 @@ void light(char board[BOARD_SIZE][SIZE + 1], short x, short y, bool not_chose)
   }
 }
 
-void becameQueen(Position where, char lodic[8][8])
-{
+void becameQueen(Position where, char lodic[8][8]){
   if (player_is_white)
   {
     if (where.y_8 == 0 && is_player_turn)
@@ -1078,8 +1062,7 @@ void becameQueen(Position where, char lodic[8][8])
   }
 }
 
-void calculate_kill_moves(Position pos, char lodic[8][8], int *move_i, short move_buffer[10][2], char lodic_buffer[10][8][8], GameState *game_states)
-{
+void calculate_kill_moves(Position pos, char lodic[8][8], int *move_i, short move_buffer[10][2], char lodic_buffer[10][8][8], GameState *game_states){
   Valid_Kill vks;
   int vks_count = get_valid_kill(pos, &vks, lodic);
   if (vks_count == 0)
@@ -1198,8 +1181,7 @@ void calculate_kill_moves(Position pos, char lodic[8][8], int *move_i, short mov
   }
 }
 
-bool computer_move(char board[BOARD_SIZE][SIZE + 1])
-{
+bool computer_move(char board[BOARD_SIZE][SIZE + 1]){
   int mx_score = -1;
   char best_lodic[8][8];
   GameState best_gs = game_state;
@@ -1339,8 +1321,7 @@ bool computer_move(char board[BOARD_SIZE][SIZE + 1])
   //   }
 }
 
-int evaluate_board_pc(char lodic[8][8], bool is_white)
-{
+int evaluate_board_pc(char lodic[8][8], bool is_white){
   int score = 0;
   int our_count = is_white ? game_state.count_white : game_state.count_black;
   int opponent_count = is_white ? game_state.count_black : game_state.count_white;
@@ -1351,14 +1332,13 @@ int evaluate_board_pc(char lodic[8][8], bool is_white)
   inc = (our_count - opponent_count) * 15;
   score += inc > 0 ? inc : 0;
   score += (lodic[3][4] == '1') * 2;
-  score += (lodic[3][4] == '1') * 2;
-  score += (lodic[3][4] == '1') * 2;
-  score += (lodic[3][4] == '1') * 2;
+  score += (lodic[4][3] == '1') * 2;
+  score += (lodic[3][3] == '1') * 2;
+  score += (lodic[4][4] == '1') * 2;
   return score;
 }
 
-int get_best_sequent_kills(Position pos, Valid_Kill vks, int vks_count, int mx_score, char lodic[8][8], char best_lodic[8][8], GameState *best_game_state)
-{
+int get_best_sequent_kills(Position pos, Valid_Kill vks, int vks_count, int mx_score, char lodic[8][8], char best_lodic[8][8], GameState *best_game_state){
   if (vks_count == 0)
   {
     int new_score = evaluate_board_pc(lodic, !player_is_white);
